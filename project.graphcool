@@ -1,0 +1,28 @@
+# project: cj5uzozhvk2rq0123clix1hs5
+# version: 4
+
+type User implements Node {
+  id: ID! @isUnique
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type File implements Node {
+  id: ID! @isUnique
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  contentType: String!
+  name: String!
+  secret: String! @isUnique
+  size: Int!
+  url: String! @isUnique
+}
+
+type Project implements Node {
+  title: String! @isUnique
+  start: DateTime!
+  end: DateTime
+  createdAt: DateTime!
+  id: ID! @isUnique
+  updatedAt: DateTime!
+}

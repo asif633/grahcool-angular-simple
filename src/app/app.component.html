@@ -1,3 +1,4 @@
 <h1>
-  {{title}}
+  <app-project-form (submitMe)="getProject($event)"></app-project-form>
+  <app-project-list [projects]="projects"></app-project-list>
 </h1>

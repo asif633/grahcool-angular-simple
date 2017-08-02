@@ -1,0 +1,5 @@
+<ul *ngFor="let project of projects | async | select: 'allProjects'">
+  <li>
+    {{project.title}}
+  </li>
+</ul>

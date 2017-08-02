@@ -1,192 +1,158 @@
 # GraphCool with Angular
 
-## GraphQL Basic
-
-### Query and Mutation
-
-Query is for reading and Mutation is for writing data to underlying data source.
-
-#### Query on fields
+## GraphQL schema
 
 ```
-{
-  hero {
-    name
-    # Queries can have comments!
-    friends {
-      name
-    }
-  }
+type Story {
+  id: ID! @isUnique
+  text: String!
+  isPublished: Boolean @defaultValue(value: "false")
+  author: Author! @relation(name: "AuthorStories")
+}
+
+type Author {
+  id: ID! @isUnique
+  age: Int
+  name: String!
+  stories: [Story!]! @relation(name: "AuthorStories")
 }
 ```
 
-##### Query using Arguments
+### Static Directives
 
-Arguments can go to every level of query. Scalar arguments to transform data.
+`@isUnique`
 
 ```
-{
-  human(id: "1000") {
-    name
-    height(unit: FOOT)
-  }
+# the `Post` type has a unique `slug` field
+type Post {
+  slug: String @isUnique
 }
 ```
 
-##### Aliases
-
-When we query same type using different arguments.
+`@relation`
 
 ```
-{
-  empireHero: hero(episode: EMPIRE) {
-    name
-  }
-  jediHero: hero(episode: JEDI) {
-    name
-  }
+# the types `Post` and `User` are connected via the `PostAuthor` relation
+type Post {
+  user: User! @relation(name: "PostAuthor")
+}
+
+type User {
+  posts: [Post!]! @relation(name: "PostAuthor")
+}
+``` 
+
+`@defaultValue(value: String!)`
+
+```
+# the `title` and `published` fields have default values `New Post` and `false`
+type Post {
+  title: String! @defaultValue(value: "New Post")
+  published: Boolean! @defaultValue(value: "false")
+}
+```
+Temporary directives, after one update should be removed
+
+```
+# Renaming the `Post` type to `Story`, and its `text` field to `content`
+type Story @rename(oldName: "Post") {
+  content: String @rename(oldName: "text")
 }
 ```
 
-##### Fragments
-
-Purpose is to remove repetition. Best use case when mutiple UI components have same query fields but different arguments.
-
 ```
-{
-  leftComparison: hero(episode: EMPIRE) {
-    ...comparisonFields
-  }
-  rightComparison: hero(episode: JEDI) {
-    ...comparisonFields
-  }
-}
-
-fragment comparisonFields on Character {
-  name
-  appearsIn
-  friends {
-    name
-  }
-}
+The temporary directive @migrationValue(value: String!) is used to migrate the value of a scalar field. 
 ```
 
-##### Variables
+### System Articfacts
 
-Passing variables in arguments.
-
+User
+File
 ```
-query HeroNameAndFriends($episode: Episode) {
-  hero(episode: $episode) {
-    name
-    friends {
-      name
-    }
-  }
-}
+contentType:
+name: String
+secret: String
+size: Integer
+url: String
 ```
 
-and the variable pass, in applications the variable passing will be through code.
+id field
 
+`createdAt` and `updatedAt`
+
+### Migrations or schema changing
+
+1. Adding types is simple add or remove sections
+2. Renaming types 
 ```
-{
-  "episode": "JEDI"
-}
-```
-
-With `!` sign the variable becomes required. Default value pass `$episode: Episode = "JEDI"`.
-Default value used with optional variable.
-
-##### Directives
-
-Directives are used to condition the query.
-
-```
-query Hero($episode: Episode, $withFriends: Boolean!) {
-  hero(episode: $episode) {
-    name
-    friends @include(if: $withFriends) {
-      name
-    }
-  }
-}
-```
-
-Two directives in main graphql `@include` and `@skip`.
-
-#### Mutations
-
-```
-mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
-  createReview(episode: $ep, review: $review) {
-    stars
-    commentary
-  }
-}
-```
-
-** Query fields can run in parallel but mutations run in series **
-
-#### Inline Fragments
-
-```
-query HeroForEpisode($ep: Episode!) {
-  hero(episode: $ep) {
-    name
-    ... on Droid {
-      primaryFunction
-    }
-    ... on Human {
-      height
-    }
-  }
-}
-```
-
-Here `Character` is an interface and `Droid` and `Human` are its types.
-
-#### Meta fields
-
-To get the typename or other meta info when query doesnot know about return.
-
-```
-{
-  search(text: "an") {
-    __typename
-    ... on Human {
-      name
-    }
-    ... on Droid {
-      name
-    }
-    ... on Starship {
-      name
-    }
-  }
-}
-```
-
-### Schema
-
-#### Object types and fields
-
-```
-type Character { // GraphQL Object
-  name: String! // means 
-  appearsIn: [Episode]! // Non Nullable, means will return something when queried.
-}
-```
-
-#### Arguments on fields
-
-```
-type Starship {
+type User implements Node {
   id: ID!
   name: String!
-  length(unit: LengthUnit = METER): Float
+  stories: [Post!]! @relation(name: "UserStories")
+}
+
+type Post implements Node @rename(oldName: "Story") {
+  id: ID!
+  isPublished: Boolean!
+  text: String!
+  slug: String! @isUnique
+  tags: [String!]
+  user: User! @relation(name: "UserStories")
 }
 ```
+3. Adding a new field is adding secton with `@migartion`
+```
+type Story implements Node {
+  id: ID!
+  name: String!
+  description: String! @migrationValue(value: "No description yet")
+  isPublished: Boolean @migrationValue(value: "true") @defaultValue(value: "false")
+  length: Int
+}
+```
+4. Removing existing field, just delete lines
+5. Renaming fields using `@rename`
+```
+type Story implements Node {
+  id: ID!
+  name: String!
+  isPublished: Boolean!
+  information: String! @rename(oldName: "description")
+  isPublished: Boolean @defaultValue(value: "false")
+  length: Int
+}
+```
+6. For type change of fields, to string doesnot need any migartion value, to other needs, to required needs default value, to optional no need
+```
+type Story implements Node {
+  id: ID!
+  name: Boolean! @migrationValue(value: "true") // was string
+  length: String!
+}
+```
+```
+type Story implements Node {
+  id: ID!
+  name: Boolean! @migrationValue(value: "true") // was optional
+  length: Int! @migrationValue(value: "0") // was optional
+}
+```
+7. Migrating relations. Singular relation fields can be optional, but plural relation fields are always required. Adding and removing relations are straight. Renaming relation
+```
+type User implements Node {
+  id: ID!
+  name: String!
+  stories: [Story!]! @relation(name: "UserOnStory") // was "UserStories"
+}
 
+type Story implements Node {
+  id: ID!
+  isPublished: Boolean!
+  text: String!
+  slug: String! @isUnique
+  tags: [String!]
+  user: User! @relation(name: "UserOnStory") // was "UserStories"
+```
 
 
 
