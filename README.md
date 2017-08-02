@@ -1,28 +1,192 @@
-# GraphcoolAngularSimple
+# GraphCool with Angular
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.1.
+## GraphQL Basic
 
-## Development server
+### Query and Mutation
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Query is for reading and Mutation is for writing data to underlying data source.
 
-## Code scaffolding
+#### Query on fields
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|module`.
+```
+{
+  hero {
+    name
+    # Queries can have comments!
+    friends {
+      name
+    }
+  }
+}
+```
 
-## Build
+##### Query using Arguments
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+Arguments can go to every level of query. Scalar arguments to transform data.
 
-## Running unit tests
+```
+{
+  human(id: "1000") {
+    name
+    height(unit: FOOT)
+  }
+}
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+##### Aliases
 
-## Running end-to-end tests
+When we query same type using different arguments.
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
+```
+{
+  empireHero: hero(episode: EMPIRE) {
+    name
+  }
+  jediHero: hero(episode: JEDI) {
+    name
+  }
+}
+```
 
-## Further help
+##### Fragments
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Purpose is to remove repetition. Best use case when mutiple UI components have same query fields but different arguments.
+
+```
+{
+  leftComparison: hero(episode: EMPIRE) {
+    ...comparisonFields
+  }
+  rightComparison: hero(episode: JEDI) {
+    ...comparisonFields
+  }
+}
+
+fragment comparisonFields on Character {
+  name
+  appearsIn
+  friends {
+    name
+  }
+}
+```
+
+##### Variables
+
+Passing variables in arguments.
+
+```
+query HeroNameAndFriends($episode: Episode) {
+  hero(episode: $episode) {
+    name
+    friends {
+      name
+    }
+  }
+}
+```
+
+and the variable pass, in applications the variable passing will be through code.
+
+```
+{
+  "episode": "JEDI"
+}
+```
+
+With `!` sign the variable becomes required. Default value pass `$episode: Episode = "JEDI"`.
+Default value used with optional variable.
+
+##### Directives
+
+Directives are used to condition the query.
+
+```
+query Hero($episode: Episode, $withFriends: Boolean!) {
+  hero(episode: $episode) {
+    name
+    friends @include(if: $withFriends) {
+      name
+    }
+  }
+}
+```
+
+Two directives in main graphql `@include` and `@skip`.
+
+#### Mutations
+
+```
+mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
+  createReview(episode: $ep, review: $review) {
+    stars
+    commentary
+  }
+}
+```
+
+** Query fields can run in parallel but mutations run in series **
+
+#### Inline Fragments
+
+```
+query HeroForEpisode($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+    ... on Human {
+      height
+    }
+  }
+}
+```
+
+Here `Character` is an interface and `Droid` and `Human` are its types.
+
+#### Meta fields
+
+To get the typename or other meta info when query doesnot know about return.
+
+```
+{
+  search(text: "an") {
+    __typename
+    ... on Human {
+      name
+    }
+    ... on Droid {
+      name
+    }
+    ... on Starship {
+      name
+    }
+  }
+}
+```
+
+### Schema
+
+#### Object types and fields
+
+```
+type Character { // GraphQL Object
+  name: String! // means 
+  appearsIn: [Episode]! // Non Nullable, means will return something when queried.
+}
+```
+
+#### Arguments on fields
+
+```
+type Starship {
+  id: ID!
+  name: String!
+  length(unit: LengthUnit = METER): Float
+}
+```
+
+
+
+
