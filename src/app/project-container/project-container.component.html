@@ -1,0 +1,9 @@
+<app-project-form (submitMe)="getProject($event)"></app-project-form>
+<app-project-list [projects]="projects1"></app-project-list>
+<button (click)="fetchMore()">Fetch More</button> {{projectsa?.length}}
+
+<ul>
+  <li *ngFor="let project of projectsa">
+    {{project.title}}
+  </li>
+</ul>

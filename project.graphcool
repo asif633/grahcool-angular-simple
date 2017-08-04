@@ -1,10 +1,15 @@
 # project: cj5uzozhvk2rq0123clix1hs5
-# version: 4
+# version: 6
 
 type User implements Node {
   id: ID! @isUnique
   createdAt: DateTime!
   updatedAt: DateTime!
+  email: String @isUnique
+  password: String
+  role: UserRole!
+  accessGroups: [AccessGroup!]! @relation(name: "AccessGroupMembers")
+  documents: [Document!]! @relation(name: "DocumentOwner")
 }
 
 type File implements Node {
@@ -25,4 +30,36 @@ type Project implements Node {
   createdAt: DateTime!
   id: ID! @isUnique
   updatedAt: DateTime!
+}
+
+type Document implements Node {
+  id: ID! @isUnique
+  content: String!
+  published: Boolean!
+  title: String!
+  accessGroups: [AccessGroup!]! @relation(name: "AccessGroupDocuments")
+  owner: [User!]! @relation(name: "DocumentOwner")
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AccessGroup implements Node {
+  id: ID! @isUnique
+  operation: AccessGroupOperation!
+  members: [User!]! @relation(name: "AccessGroupMembers")
+  documents: [Document!]! @relation(name: "AccessGroupDocuments")
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum UserRole {
+  EDITOR
+  MODERATOR
+  ADMIN
+}
+
+enum AccessGroupOperation {
+  READ
+  UPDATE
+  DELETE
 }
