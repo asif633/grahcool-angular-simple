@@ -18,6 +18,7 @@ import { DocumentFormComponent } from './document-form/document-form.component';
 import { DocumentListComponent } from './document-list/document-list.component';
 import { appRoutes } from './app.router';
 import { LoginService } from './services/login.service';
+import { DashboardComponent } from './dashboard/dashboard.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { LoginService } from './services/login.service';
     ProjectContainerComponent,
     DocumentContainerComponent,
     DocumentFormComponent,
-    DocumentListComponent
+    DocumentListComponent,
+    DashboardComponent
   ],
   imports: [
     BrowserModule,
